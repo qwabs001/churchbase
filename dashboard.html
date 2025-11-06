@@ -59,6 +59,10 @@
           </div>
           <div class="d-flex flex-wrap align-items-center gap-3">
             <div class="chip-light" id="currencyChip">Currency: ₵</div>
+              <button class="btn btn-outline-primary d-flex align-items-center gap-2" id="currencyToggle" type="button" aria-label="Switch currency">
+                <i class="fa-solid fa-coins"></i>
+                <span id="currencyToggleLabel">Next: USD</span>
+              </button>
             <button class="mode-toggle" id="modeToggle">
               <i class="fa-solid fa-circle-half-stroke"></i>
               <span>Light</span>
@@ -335,6 +339,23 @@
                         <option value="dark">Dark</option>
                       </select>
                     </div>
+                      <div class="mb-3">
+                        <label class="form-label">Primary color</label>
+                        <div class="d-flex flex-column flex-xl-row align-items-start align-items-xl-center gap-3">
+                          <div class="d-flex align-items-center gap-2">
+                            <input type="color" class="form-control form-control-color" id="primaryColorPicker" value="#00393a" title="Choose primary color" />
+                            <span class="chip-light" id="primaryColorPreview">#00393A</span>
+                          </div>
+                          <div class="d-flex align-items-center gap-2">
+                            <small class="text-muted text-uppercase fw-semibold">Accent</small>
+                            <span class="accent-preview" id="accentColorPreview" title="Accent color"></span>
+                          </div>
+                          <button class="btn btn-outline-secondary btn-sm ms-0 ms-xl-auto" type="button" id="resetThemeBtn">
+                            <i class="fa-solid fa-rotate-left me-1"></i>Reset to Default
+                          </button>
+                        </div>
+                        <small class="text-muted d-block mt-2">Updates instantly across sidebar, buttons, and charts.</small>
+                      </div>
                     <button class="btn btn-primary" type="submit">Save preferences</button>
                   </form>
                 </div>
@@ -436,9 +457,19 @@
                   <label class="form-label" for="memberNotes">Notes</label>
                   <textarea class="form-control" id="memberNotes" rows="3"></textarea>
                 </div>
-                <div class="col-md-12">
-                  <label class="form-label" for="memberPhoto">Profile photo URL</label>
+                <div class="col-md-4">
+                  <label class="form-label d-block">Profile photo</label>
+                  <div class="d-flex flex-column align-items-center gap-2">
+                    <img src="https://api.dicebear.com/8.x/initials/svg?seed=Member" alt="Profile photo preview" id="memberPhotoPreview" />
+                    <small class="text-muted">Preview</small>
+                  </div>
+                </div>
+                <div class="col-md-8">
+                  <label class="form-label" for="memberPhotoFile">Upload profile photo</label>
+                  <input type="file" class="form-control mb-2" id="memberPhotoFile" accept="image/*" />
+                  <label class="form-label" for="memberPhoto">Or use a photo URL</label>
                   <input type="url" class="form-control" id="memberPhoto" placeholder="https://" />
+                  <small class="text-muted">If both are provided, the uploaded image will be used.</small>
                 </div>
               </div>
             </form>

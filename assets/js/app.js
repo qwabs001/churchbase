@@ -16,6 +16,14 @@ import {
   serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
 
+const DEFAULT_THEME = {
+  primary: '#00393a',
+  accent: '#c4ef17'
+};
+
+const CURRENCY_SEQUENCE = ['GHS', 'USD', 'EUR', 'GBP'];
+const MAX_PHOTO_SIZE = 2 * 1024 * 1024; // 2MB
+
 const state = {
   user: null,
   church: null,
@@ -33,7 +41,8 @@ const state = {
     code: 'GHS',
     symbol: '₵',
     rates: { GHS: 1, USD: 0.082, GBP: 0.064, EUR: 0.076 }
-  }
+  },
+  theme: { ...DEFAULT_THEME }
 };
 
 const elements = {
@@ -42,6 +51,8 @@ const elements = {
   accountEmail: document.getElementById('accountEmail'),
   accountInitials: document.getElementById('accountInitials'),
   currencyChip: document.getElementById('currencyChip'),
+  currencyToggle: document.getElementById('currencyToggle'),
+  currencyToggleLabel: document.getElementById('currencyToggleLabel'),
   notificationCount: document.getElementById('notificationCount'),
   notificationsList: document.getElementById('notificationsList'),
   automationFeed: document.getElementById('automationFeed'),
@@ -50,6 +61,9 @@ const elements = {
   attendanceTableBody: document.querySelector('#attendanceTable tbody'),
   financeTableBody: document.querySelector('#financeTable tbody'),
   groupsTableBody: document.querySelector('#groupsTable tbody'),
+  memberPhotoFile: document.getElementById('memberPhotoFile'),
+  memberPhotoPreview: document.getElementById('memberPhotoPreview'),
+  memberPhotoUrl: document.getElementById('memberPhoto'),
   attendanceSummary: document.getElementById('attendanceSummary'),
   financeSummary: document.getElementById('financeSummary'),
   statMembers: document.getElementById('statMembers'),
@@ -61,15 +75,385 @@ const elements = {
   financeYellowCard: document.getElementById('financeYellowCard'),
   settingsCurrency: document.getElementById('settingsCurrency'),
   settingsTheme: document.getElementById('settingsTheme'),
+  primaryColorPicker: document.getElementById('primaryColorPicker'),
+  primaryColorPreview: document.getElementById('primaryColorPreview'),
+  accentColorPreview: document.getElementById('accentColorPreview'),
+  resetThemeBtn: document.getElementById('resetThemeBtn'),
   managerEmail: document.getElementById('managerEmail'),
   subManagerEmail: document.getElementById('subManagerEmail')
 };
 
+const convertAmount = (amount = 0) => {
+  const rate = state.currency.rates?.[state.currency.code] ?? 1;
+  return amount * rate;
+};
+
 const formatCurrency = (amount = 0) => {
-  const { code, symbol, rates } = state.currency;
-  const rate = rates?.[code] ?? 1;
-  const converted = amount * rate;
-  return `${symbol}${converted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const converted = convertAmount(amount);
+  return `${state.currency.symbol}${converted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+const getNextCurrency = (current) => {
+  const index = CURRENCY_SEQUENCE.indexOf(current);
+  return CURRENCY_SEQUENCE[(index + 1) % CURRENCY_SEQUENCE.length];
+};
+
+const updateCurrencyToggleLabel = () => {
+  if (!elements.currencyToggleLabel) return;
+  const next = getNextCurrency(state.currency.code);
+  elements.currencyToggleLabel.textContent = `Next: ${next}`;
+};
+
+const updateCurrencyChip = () => {
+  if (elements.currencyChip) {
+    elements.currencyChip.textContent = `Currency: ${state.currency.symbol} (${state.currency.code})`;
+  }
+};
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const themeStorageKey = () => (state.user ? `gracetrack:dashboard:theme:${state.user.uid}` : 'gracetrack:dashboard:theme');
+
+const loadThemeFromStorage = () => {
+  try {
+    const stored = localStorage.getItem(themeStorageKey());
+    return stored ? JSON.parse(stored) : null;
+  } catch (error) {
+    console.warn('GraceTrack: unable to read theme from storage', error);
+    return null;
+  }
+};
+
+const storeThemeToStorage = (theme) => {
+  try {
+    localStorage.setItem(themeStorageKey(), JSON.stringify(theme));
+  } catch (error) {
+    console.warn('GraceTrack: unable to persist theme', error);
+  }
+};
+
+const hexToRgb = (hex = '') => {
+  const normalized = hex.replace('#', '').trim();
+  if (![3, 6].includes(normalized.length)) return [0, 57, 58];
+  const expanded = normalized.length === 3 ? normalized.split('').map((ch) => ch + ch).join('') : normalized;
+  const int = Number.parseInt(expanded, 16);
+  return [(int >> 16) & 255, (int >> 8) & 255, int & 255];
+};
+
+const hexToHsl = (hex = '') => {
+  const [r, g, b] = hexToRgb(hex).map((value) => value / 255);
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      default:
+        h = (r - g) / d + 4;
+        break;
+    }
+    h /= 6;
+  }
+
+  return { h: Math.round(h * 360), s, l };
+};
+
+const hslToHex = (h, s, l) => {
+  const hue2rgb = (p, q, t) => {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+
+  const sat = clamp(s, 0, 1);
+  const light = clamp(l, 0, 1);
+  const hue = (((h % 360) + 360) % 360) / 360;
+
+  let r;
+  let g;
+  let b;
+
+  if (sat === 0) {
+    r = g = b = light;
+  } else {
+    const q = light < 0.5 ? light * (1 + sat) : light + sat - light * sat;
+    const p = 2 * light - q;
+    r = hue2rgb(p, q, hue + 1 / 3);
+    g = hue2rgb(p, q, hue);
+    b = hue2rgb(p, q, hue - 1 / 3);
+  }
+
+  const toHex = (value) => Math.round(value * 255).toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+};
+
+const shadeColor = (hex, percent = 0) => {
+  const [r, g, b] = hexToRgb(hex);
+  const amount = clamp(percent, -100, 100) / 100;
+  const target = amount < 0 ? 0 : 255;
+  const absAmount = Math.abs(amount);
+  const compute = (channel) => Math.round((target - channel) * absAmount + channel);
+  return `#${compute(r).toString(16).padStart(2, '0')}${compute(g).toString(16).padStart(2, '0')}${compute(b).toString(16).padStart(2, '0')}`;
+};
+
+const withAlpha = (hex, alpha = 1) => {
+  const [r, g, b] = hexToRgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${clamp(alpha, 0, 1)})`;
+};
+
+const generateAccentColor = (primary) => {
+  if (!primary) return DEFAULT_THEME.accent;
+  if (primary.toLowerCase() === DEFAULT_THEME.primary.toLowerCase()) {
+    return DEFAULT_THEME.accent;
+  }
+  const { h, s } = hexToHsl(primary);
+  const accentHue = (h + 252) % 360;
+  const accentSaturation = clamp(s * 0.75 + 0.25, 0, 1);
+  const accentLightness = 0.62;
+  return hslToHex(accentHue, accentSaturation, accentLightness);
+};
+
+const isColorDark = (hex = '') => {
+  const [r, g, b] = hexToRgb(hex);
+  const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+  return brightness < 150;
+};
+
+const updateThemeControls = (theme = state.theme) => {
+  if (!elements.primaryColorPicker) return;
+  const resolved = {
+    ...DEFAULT_THEME,
+    ...theme
+  };
+  elements.primaryColorPicker.value = resolved.primary;
+  if (elements.primaryColorPreview) {
+    elements.primaryColorPreview.textContent = resolved.primary.toUpperCase();
+    elements.primaryColorPreview.style.backgroundColor = resolved.primary;
+    elements.primaryColorPreview.style.color = isColorDark(resolved.primary) ? '#ffffff' : '#001f21';
+  }
+  if (elements.accentColorPreview) {
+    elements.accentColorPreview.style.backgroundColor = resolved.accent;
+    elements.accentColorPreview.title = `Accent ${resolved.accent.toUpperCase()}`;
+  }
+};
+
+const refreshChartPalettes = () => {
+  const { primary, accent } = state.theme;
+  if (state.charts.attendance) {
+    const presentDataset = state.charts.attendance.data.datasets[0];
+    const expectedDataset = state.charts.attendance.data.datasets[1];
+    presentDataset.borderColor = primary;
+    presentDataset.backgroundColor = withAlpha(primary, 0.25);
+    expectedDataset.borderColor = accent;
+    expectedDataset.backgroundColor = withAlpha(accent, 0.25);
+    state.charts.attendance.update('none');
+  }
+  if (state.charts.finance) {
+    const palette = [
+      primary,
+      shadeColor(primary, -12),
+      accent,
+      shadeColor(accent, -18),
+      '#2a9895',
+      '#8f8f8f'
+    ];
+    state.charts.finance.data.datasets[0].backgroundColor = palette;
+    state.charts.finance.update('none');
+  }
+};
+
+const applyColorTheme = (theme = DEFAULT_THEME) => {
+  const resolvedPrimary = theme.primary || DEFAULT_THEME.primary;
+  const resolvedAccent = theme.accent || generateAccentColor(resolvedPrimary);
+  const resolved = { primary: resolvedPrimary, accent: resolvedAccent };
+  state.theme = resolved;
+  const root = document.documentElement;
+  const primaryShade = shadeColor(resolved.primary, -18);
+  const accentShade = shadeColor(resolved.accent, -20);
+  const [pr, pg, pb] = hexToRgb(resolved.primary);
+  const [ar, ag, ab] = hexToRgb(resolved.accent);
+  root.style.setProperty('--primary-navy', resolved.primary);
+  root.style.setProperty('--primary-navy-900', primaryShade);
+  root.style.setProperty('--primary-navy-rgb', `${pr}, ${pg}, ${pb}`);
+  root.style.setProperty('--gold', resolved.accent);
+  root.style.setProperty('--gold-dark', accentShade);
+  root.style.setProperty('--gold-rgb', `${ar}, ${ag}, ${ab}`);
+  refreshChartPalettes();
+  if (state.church) {
+    state.church.preferences = {
+      ...(state.church.preferences || {}),
+      primaryColor: resolved.primary,
+      accentColor: resolved.accent
+    };
+  }
+};
+
+const hydrateTheme = (preferences = {}) => {
+  const stored = loadThemeFromStorage();
+  const preferredPrimary = stored?.primary || preferences.primaryColor || DEFAULT_THEME.primary;
+  const preferredAccent = stored?.accent || preferences.accentColor;
+  const resolvedAccent = preferredAccent || generateAccentColor(preferredPrimary);
+  const resolved = { primary: preferredPrimary, accent: resolvedAccent };
+  applyColorTheme(resolved);
+  updateThemeControls(resolved);
+  if (!stored) {
+    storeThemeToStorage(resolved);
+  }
+};
+
+const getAvatarFallback = (name = 'Member') => `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(name || 'Member')}`;
+
+const readFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error('Unable to read file'));
+    reader.readAsDataURL(file);
+  });
+
+const setMemberPhotoPreviewSrc = (src, name = 'Member') => {
+  if (!elements.memberPhotoPreview) return;
+  elements.memberPhotoPreview.src = src || getAvatarFallback(name);
+  elements.memberPhotoPreview.alt = name ? `${name} profile photo` : 'Profile photo preview';
+};
+
+const clearMemberPhotoUpload = (name = '') => {
+  if (elements.memberPhotoFile) {
+    elements.memberPhotoFile.value = '';
+  }
+  if (elements.memberPhotoPreview) {
+    delete elements.memberPhotoPreview.dataset.upload;
+    const urlSource = elements.memberPhotoUrl?.value?.trim()
+      ? elements.memberPhotoUrl.value.trim()
+      : null;
+    setMemberPhotoPreviewSrc(urlSource, name || elements.memberPhotoUrl?.value?.trim() || 'Member');
+  }
+};
+
+const resetMemberPhotoFields = () => {
+  if (elements.memberPhotoUrl) {
+    elements.memberPhotoUrl.value = '';
+  }
+  clearMemberPhotoUpload('Member');
+};
+
+const handleMemberPhotoFileChange = async (event) => {
+  const file = event.target.files?.[0];
+  const memberName = document.getElementById('memberName')?.value.trim() || 'Member';
+
+  if (!file) {
+    if (elements.memberPhotoPreview?.dataset) {
+      delete elements.memberPhotoPreview.dataset.upload;
+    }
+    setMemberPhotoPreviewSrc(elements.memberPhotoUrl?.value.trim() || null, memberName);
+    return;
+  }
+
+  if (!file.type.startsWith('image/')) {
+    showToast('Please select a valid image file.', 'danger');
+    event.target.value = '';
+    clearMemberPhotoUpload(memberName);
+    return;
+  }
+
+  if (file.size > MAX_PHOTO_SIZE) {
+    showToast('Image must be smaller than 2MB.', 'danger');
+    event.target.value = '';
+    clearMemberPhotoUpload(memberName);
+    return;
+  }
+
+  try {
+    const dataUrl = await readFileAsDataUrl(file);
+    if (elements.memberPhotoPreview) {
+      elements.memberPhotoPreview.dataset.upload = dataUrl;
+      setMemberPhotoPreviewSrc(dataUrl, memberName);
+    }
+  } catch (error) {
+    console.error('GraceTrack: unable to read photo file', error);
+    showToast('Could not read the selected photo. Please try again.', 'danger');
+    event.target.value = '';
+    clearMemberPhotoUpload(memberName);
+  }
+};
+
+const handleMemberPhotoUrlInput = (event) => {
+  const url = event.target.value.trim();
+  const memberName = document.getElementById('memberName')?.value.trim() || 'Member';
+  if (elements.memberPhotoPreview?.dataset?.upload) {
+    return;
+  }
+  if (url) {
+    setMemberPhotoPreviewSrc(url, memberName);
+  } else {
+    setMemberPhotoPreviewSrc(null, memberName);
+  }
+};
+
+const updateThemePalette = async (primary, { persist = false } = {}) => {
+  if (!primary) return state.theme;
+  const accent = generateAccentColor(primary);
+  const theme = { primary, accent };
+  applyColorTheme(theme);
+  updateThemeControls(theme);
+  storeThemeToStorage(theme);
+  if (persist) {
+    await savePreferences({ primaryColor: theme.primary, accentColor: theme.accent });
+  }
+  return theme;
+};
+
+const previewPrimaryColor = (event) => {
+  const color = event?.target?.value;
+  updateThemePalette(color, { persist: false });
+};
+
+const persistPrimaryColor = async (event) => {
+  const color = event?.target?.value;
+  await updateThemePalette(color, { persist: true });
+  showToast('Theme palette updated.');
+};
+
+const resetThemePalette = async () => {
+  await updateThemePalette(DEFAULT_THEME.primary, { persist: true });
+  showToast('Theme colors reset.', 'info');
+};
+
+const cycleCurrency = async () => {
+  const nextCurrency = getNextCurrency(state.currency.code);
+  state.currency.code = nextCurrency;
+  state.currency.symbol = resolveCurrencySymbol(nextCurrency);
+  if (state.church) {
+    state.church.preferences = {
+      ...(state.church.preferences || {}),
+      currency: nextCurrency
+    };
+  }
+  updateCurrencyChip();
+  if (elements.settingsCurrency) {
+    elements.settingsCurrency.value = nextCurrency;
+  }
+  updateCurrencyToggleLabel();
+  updateStats();
+  renderFinance();
+  renderFinanceSummary();
+  updateFinanceChart();
+  refreshAutomationFeed();
+  await savePreferences({ currency: nextCurrency });
+  showToast(`Currency set to ${nextCurrency}.`);
 };
 
 const setDashboardTheme = (theme) => {
@@ -105,6 +489,7 @@ const subscribeToCollections = async () => {
     state.currency.code = data?.preferences?.currency ?? 'GHS';
     state.currency.rates = data?.preferences?.conversions ?? state.currency.rates;
     state.currency.symbol = resolveCurrencySymbol(state.currency.code);
+    hydrateTheme(data?.preferences || {});
     refreshProfileUI();
     setDashboardTheme(data?.preferences?.theme ?? 'light');
   });
@@ -181,15 +566,15 @@ const refreshProfileUI = () => {
   elements.accountName.textContent = displayName;
   elements.accountEmail.textContent = email;
   elements.accountInitials.textContent = deriveInitials(displayName);
-  if (elements.currencyChip) {
-    elements.currencyChip.textContent = `Currency: ${state.currency.symbol}`;
-  }
+  updateCurrencyChip();
+  updateCurrencyToggleLabel();
   if (elements.settingsCurrency) {
     elements.settingsCurrency.value = state.currency.code;
   }
   if (elements.settingsTheme && state.church?.preferences?.theme) {
     elements.settingsTheme.value = state.church.preferences.theme;
   }
+  updateThemeControls(state.theme);
   if (elements.managerEmail && state.church?.roles) {
     elements.managerEmail.value = state.church.roles.managerEmail || '';
     elements.subManagerEmail.value = state.church.roles.subManagerEmail || '';
@@ -223,7 +608,7 @@ const renderMembers = () => {
         <tr data-id="${member.id}">
           <td>
             <div class="d-flex align-items-center gap-3">
-              <img src="${member.photoUrl || 'https://api.dicebear.com/8.x/initials/svg?seed=' + encodeURIComponent(member.fullName || 'Member')}" alt="avatar" class="rounded-circle" width="44" height="44"/>
+                <img src="${member.photoUrl || getAvatarFallback(member.fullName)}" alt="avatar" class="rounded-circle" width="44" height="44"/>
               <div>
                 <span class="fw-semibold d-block">${member.fullName || 'Unnamed member'}</span>
                 <small class="text-muted">${member.gender || ''} ${member.age ? `· ${member.age}` : ''}</small>
@@ -418,6 +803,8 @@ const updateAttendanceChart = () => {
     return;
   }
 
+  const { primary, accent } = state.theme;
+
   state.charts.attendance = new Chart(ctx, {
     type: 'line',
     data: {
@@ -426,8 +813,8 @@ const updateAttendanceChart = () => {
         {
           label: 'Present',
           data: values,
-          borderColor: '#0f2856',
-          backgroundColor: 'rgba(15, 40, 86, 0.2)',
+          borderColor: primary,
+          backgroundColor: withAlpha(primary, 0.25),
           tension: 0.4,
           fill: true,
           pointRadius: 4
@@ -435,8 +822,8 @@ const updateAttendanceChart = () => {
         {
           label: 'Expected',
           data: expected,
-          borderColor: '#f3c969',
-          backgroundColor: 'rgba(243, 201, 105, 0.25)',
+          borderColor: accent,
+          backgroundColor: withAlpha(accent, 0.25),
           tension: 0.4,
           fill: true,
           pointRadius: 4
@@ -460,10 +847,19 @@ const updateFinanceChart = () => {
   const values = categories.map((category) => sumFinanceByCategory(category));
 
   if (state.charts.finance) {
-    state.charts.finance.data.datasets[0].data = values;
+    state.charts.finance.data.datasets[0].data = values.map((value) => convertAmount(value));
     state.charts.finance.update();
     return;
   }
+
+  const palette = [
+    state.theme.primary,
+    shadeColor(state.theme.primary, -12),
+    state.theme.accent,
+    shadeColor(state.theme.accent, -18),
+    '#2a9895',
+    '#8f8f8f'
+  ];
 
   state.charts.finance = new Chart(ctx, {
     type: 'doughnut',
@@ -471,8 +867,8 @@ const updateFinanceChart = () => {
       labels: categories,
       datasets: [
         {
-          data: values,
-          backgroundColor: ['#0f2856', '#17346d', '#f3c969', '#d9a441', '#2a9895', '#8f8f8f'],
+          data: values.map((value) => convertAmount(value)),
+          backgroundColor: palette,
           borderWidth: 0
         }
       ]
@@ -839,6 +1235,16 @@ const registerEventHandlers = () => {
     await savePreferences({ theme: nextTheme });
   });
 
+  elements.primaryColorPicker?.addEventListener('input', previewPrimaryColor);
+  elements.primaryColorPicker?.addEventListener('change', persistPrimaryColor);
+  elements.resetThemeBtn?.addEventListener('click', resetThemePalette);
+  elements.currencyToggle?.addEventListener('click', () => {
+    cycleCurrency().catch((error) => {
+      console.error('GraceTrack: currency switch failed', error);
+      showToast('Unable to switch currency right now.', 'danger');
+    });
+  });
+
   document.getElementById('notificationsBtn')?.addEventListener('click', () => {
     const offcanvas = bootstrap.Offcanvas.getOrCreateInstance('#notificationsPanel');
     offcanvas.show();
@@ -846,6 +1252,31 @@ const registerEventHandlers = () => {
 
   elements.memberFilter?.addEventListener('change', renderMembers);
   document.getElementById('memberSearch')?.addEventListener('input', renderMembers);
+
+  elements.memberPhotoFile?.addEventListener('change', handleMemberPhotoFileChange);
+  elements.memberPhotoUrl?.addEventListener('input', handleMemberPhotoUrlInput);
+  document.getElementById('memberName')?.addEventListener('input', (event) => {
+    if (elements.memberPhotoPreview?.dataset?.upload) return;
+    if (elements.memberPhotoUrl?.value.trim()) return;
+    setMemberPhotoPreviewSrc(null, event.target.value.trim() || 'Member');
+  });
+
+  const memberModalElement = document.getElementById('memberModal');
+  memberModalElement?.addEventListener('show.bs.modal', () => {
+    const memberIdField = document.getElementById('memberId');
+    if (!memberIdField?.value) {
+      resetMemberPhotoFields();
+    }
+  });
+  memberModalElement?.addEventListener('hidden.bs.modal', () => {
+    const memberIdField = document.getElementById('memberId');
+    if (memberIdField) {
+      memberIdField.value = '';
+    }
+    resetMemberPhotoFields();
+    document.getElementById('memberForm')?.reset();
+    document.getElementById('memberModalLabel').textContent = 'Add member';
+  });
 
   document.getElementById('saveMemberBtn')?.addEventListener('click', saveMemberFromModal);
   document.getElementById('saveAttendanceBtn')?.addEventListener('click', saveAttendanceFromModal);
@@ -864,15 +1295,24 @@ const registerEventHandlers = () => {
     event.preventDefault();
     const currency = elements.settingsCurrency?.value;
     const theme = elements.settingsTheme?.value;
-    await savePreferences({ currency, theme });
-    setDashboardTheme(theme);
     state.currency.code = currency;
     state.currency.symbol = resolveCurrencySymbol(currency);
+    if (state.church) {
+      state.church.preferences = {
+        ...(state.church.preferences || {}),
+        currency,
+        theme
+      };
+    }
+    updateCurrencyToggleLabel();
     updateStats();
     renderFinance();
-    if (elements.currencyChip) {
-      elements.currencyChip.textContent = `Currency: ${state.currency.symbol}`;
-    }
+    renderFinanceSummary();
+    updateFinanceChart();
+    refreshAutomationFeed();
+    updateCurrencyChip();
+    await savePreferences({ currency, theme });
+    setDashboardTheme(theme);
     showToast('Preferences updated.');
   });
 
@@ -949,7 +1389,16 @@ const populateModalForEntity = (entity, record) => {
       document.getElementById('memberMinistry').value = record.ministry || '';
       document.getElementById('memberRole').value = record.role || '';
       document.getElementById('memberNotes').value = record.notes || '';
-      document.getElementById('memberPhoto').value = record.photoUrl || '';
+        document.getElementById('memberPhoto').value = record.photoUrl || '';
+        if (elements.memberPhotoPreview) {
+          if (elements.memberPhotoPreview.dataset) {
+            delete elements.memberPhotoPreview.dataset.upload;
+          }
+          setMemberPhotoPreviewSrc(record.photoUrl || '', record.fullName || 'Member');
+        }
+        if (elements.memberPhotoFile) {
+          elements.memberPhotoFile.value = '';
+        }
       break;
     case 'attendance':
       document.getElementById('attendanceModalLabel').textContent = 'Request attendance edit';
@@ -1000,8 +1449,7 @@ const saveMemberFromModal = async () => {
     address: document.getElementById('memberAddress').value.trim(),
     ministry: document.getElementById('memberMinistry').value.trim(),
     role: document.getElementById('memberRole').value.trim(),
-    notes: document.getElementById('memberNotes').value.trim(),
-    photoUrl: document.getElementById('memberPhoto').value.trim()
+    notes: document.getElementById('memberNotes').value.trim()
   };
 
   if (!basePayload.fullName) {
@@ -1012,7 +1460,9 @@ const saveMemberFromModal = async () => {
   const modal = bootstrap.Modal.getOrCreateInstance('#memberModal');
   modal.hide();
 
-  const payload = { ...basePayload };
+  const uploadDataUrl = elements.memberPhotoPreview?.dataset?.upload;
+  const urlSource = elements.memberPhotoUrl?.value.trim();
+  const payload = { ...basePayload, photoUrl: uploadDataUrl || urlSource || '' };
 
   if (id) {
     await createEditRequest({ entity: 'members', action: 'update', recordId: id, payload });
@@ -1022,6 +1472,7 @@ const saveMemberFromModal = async () => {
     showToast('Member added and locked.', 'success');
   }
   document.getElementById('memberForm').reset();
+  resetMemberPhotoFields();
   document.getElementById('memberModalLabel').textContent = 'Add member';
 };
 
@@ -1141,10 +1592,22 @@ const handleApprovalDecision = (approve) => {
 
 const savePreferences = async (updates = {}) => {
   const churchRef = doc(db, 'churches', state.user.uid);
-  await updateDoc(churchRef, {
-    'preferences.currency': updates.currency ?? state.church?.preferences?.currency ?? 'GHS',
-    'preferences.theme': updates.theme ?? state.church?.preferences?.theme ?? 'light'
-  });
+  const payload = {};
+  if (Object.prototype.hasOwnProperty.call(updates, 'currency') && updates.currency) {
+    payload['preferences.currency'] = updates.currency;
+  }
+  if (Object.prototype.hasOwnProperty.call(updates, 'theme') && updates.theme) {
+    payload['preferences.theme'] = updates.theme;
+  }
+  if (Object.prototype.hasOwnProperty.call(updates, 'primaryColor') && updates.primaryColor) {
+    payload['preferences.primaryColor'] = updates.primaryColor;
+  }
+  if (Object.prototype.hasOwnProperty.call(updates, 'accentColor') && updates.accentColor) {
+    payload['preferences.accentColor'] = updates.accentColor;
+  }
+  if (Object.keys(payload).length) {
+    await updateDoc(churchRef, payload);
+  }
 };
 
 const handleCsvImport = () => {
@@ -1306,6 +1769,7 @@ const capitalize = (text = '') => text ? text.charAt(0).toUpperCase() + text.sli
 const initDashboard = async () => {
   initialiseNavigation();
   registerEventHandlers();
+  updateCurrencyToggleLabel();
 };
 
 onAuthStateChanged(auth, async (user) => {

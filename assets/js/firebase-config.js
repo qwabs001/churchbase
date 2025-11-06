@@ -16,7 +16,7 @@ const firebaseConfig = window.GT_FIREBASE_CONFIG || FALLBACK_CONFIG;
 if (!firebaseConfig || firebaseConfig.apiKey?.includes('YOUR_API_KEY')) {
   console.warn(
     '%cGraceTrack:',
-    'color:#f3c969;font-weight:bold;',
+    'color:#c4ef17;font-weight:bold;',
     'Firebase config is using placeholder values. Update assets/js/firebase-config.js or set window.GT_FIREBASE_CONFIG before loading scripts.'
   );
 }
