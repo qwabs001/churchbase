@@ -68,6 +68,8 @@ const buildChurchProfile = (user, { churchName, fullName }) => ({
   preferences: {
     currency: 'GHS',
     theme: 'light',
+    primaryColor: '#00393a',
+    accentColor: '#c4ef17',
     conversions: {
       GHS: 1,
       USD: 0.082,
