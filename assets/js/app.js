@@ -27,31 +27,53 @@ const state = {
   notifications: [],
   charts: {
     attendance: null,
-    finance: null
+    finance: null,
+    attendanceDetail: null,
+    reportsAttendance: null,
+    reportsFinance: null
   },
   currency: {
     code: 'GHS',
     symbol: '₵',
     rates: { GHS: 1, USD: 0.082, GBP: 0.064, EUR: 0.076 }
+  },
+  ui: {
+    financeCategory: '',
+    financeSearch: '',
+    financeStatus: '',
+    accent: 'blue',
+    reports: {
+      start: null,
+      end: null,
+      event: ''
+    }
   }
 };
 
 const elements = {
   sidebarUserName: document.getElementById('sidebarUserName'),
+  topbarName: document.getElementById('topbarName'),
+  topbarEmail: document.getElementById('topbarEmail'),
+  topbarInitials: document.getElementById('topbarInitials'),
   accountName: document.getElementById('accountName'),
   accountEmail: document.getElementById('accountEmail'),
   accountInitials: document.getElementById('accountInitials'),
   currencyChip: document.getElementById('currencyChip'),
+  headerCurrencySelect: document.getElementById('headerCurrencySelect'),
   notificationCount: document.getElementById('notificationCount'),
   notificationsList: document.getElementById('notificationsList'),
   automationFeed: document.getElementById('automationFeed'),
   memberFilter: document.getElementById('memberFilter'),
+  memberStatusFilter: document.getElementById('memberStatusFilter'),
+  memberActivityFeed: document.getElementById('memberActivityFeed'),
+  upcomingEventsFeed: document.getElementById('upcomingEventsFeed'),
   membersTableBody: document.querySelector('#membersTable tbody'),
   attendanceTableBody: document.querySelector('#attendanceTable tbody'),
   financeTableBody: document.querySelector('#financeTable tbody'),
   groupsTableBody: document.querySelector('#groupsTable tbody'),
   attendanceSummary: document.getElementById('attendanceSummary'),
-  financeSummary: document.getElementById('financeSummary'),
+  attendanceSummaryReports: document.getElementById('attendanceSummaryReports'),
+  financeSummaryReports: document.getElementById('financeSummaryReports'),
   statMembers: document.getElementById('statMembers'),
   statAttendance: document.getElementById('statAttendance'),
   statFinance: document.getElementById('statFinance'),
@@ -59,10 +81,25 @@ const elements = {
   financeWeekTotal: document.getElementById('financeWeekTotal'),
   financeMonthTotal: document.getElementById('financeMonthTotal'),
   financeYellowCard: document.getElementById('financeYellowCard'),
+  financeTabs: document.getElementById('financeTabs'),
+  financeSearch: document.getElementById('financeSearch'),
+  financeStatusFilter: document.getElementById('financeStatusFilter'),
+  financeSelectAll: document.getElementById('financeSelectAll'),
+  financeDeleteRows: document.getElementById('financeDeleteRows'),
+  financeAutoTotal: document.getElementById('financeAutoTotal'),
   settingsCurrency: document.getElementById('settingsCurrency'),
   settingsTheme: document.getElementById('settingsTheme'),
+  colorPalette: document.getElementById('colorPalette'),
+  resetPreferences: document.getElementById('resetPreferences'),
+  sidebarThemeToggle: document.getElementById('sidebarThemeToggle'),
   managerEmail: document.getElementById('managerEmail'),
-  subManagerEmail: document.getElementById('subManagerEmail')
+  subManagerEmail: document.getElementById('subManagerEmail'),
+  reportsStartDate: document.getElementById('reportsStartDate'),
+  reportsEndDate: document.getElementById('reportsEndDate'),
+  reportsEventFilter: document.getElementById('reportsEventFilter'),
+  reportsAttendanceChart: document.getElementById('reportsAttendanceChart'),
+  reportsFinanceChart: document.getElementById('reportsFinanceChart'),
+  attendanceDetailChart: document.getElementById('attendanceDetailChart')
 };
 
 const formatCurrency = (amount = 0) => {
@@ -74,9 +111,25 @@ const formatCurrency = (amount = 0) => {
 
 const setDashboardTheme = (theme) => {
   document.body.classList.toggle('dark-mode', theme === 'dark');
+  document.body.dataset.theme = theme;
   const toggleLabel = document.querySelector('#modeToggle span');
   if (toggleLabel) {
     toggleLabel.textContent = theme === 'dark' ? 'Dark' : 'Light';
+  }
+  if (elements.sidebarThemeToggle) {
+    elements.sidebarThemeToggle.innerHTML = `<i class="fa-solid fa-circle-half-stroke"></i>${theme === 'dark' ? ' Light mode' : ' Dark mode'}`;
+  }
+};
+
+const applyAccent = (accent = 'blue') => {
+  const supported = ['blue', 'gold', 'mint', 'purple'];
+  const tone = supported.includes(accent) ? accent : 'blue';
+  state.ui.accent = tone;
+  document.body.dataset.accent = tone;
+  if (elements.colorPalette) {
+    elements.colorPalette.querySelectorAll('.palette-swatch').forEach((swatch) => {
+      swatch.classList.toggle('active', swatch.getAttribute('data-accent') === tone);
+    });
   }
 };
 
@@ -105,8 +158,10 @@ const subscribeToCollections = async () => {
     state.currency.code = data?.preferences?.currency ?? 'GHS';
     state.currency.rates = data?.preferences?.conversions ?? state.currency.rates;
     state.currency.symbol = resolveCurrencySymbol(state.currency.code);
+    state.ui.accent = data?.preferences?.accent ?? state.ui.accent ?? 'blue';
     refreshProfileUI();
     setDashboardTheme(data?.preferences?.theme ?? 'light');
+    applyAccent(state.ui.accent);
   });
 
   attachCollectionListener(churchRef, 'members', 'fullName', (items) => {
@@ -181,11 +236,23 @@ const refreshProfileUI = () => {
   elements.accountName.textContent = displayName;
   elements.accountEmail.textContent = email;
   elements.accountInitials.textContent = deriveInitials(displayName);
+  if (elements.topbarName) {
+    elements.topbarName.textContent = displayName;
+  }
+  if (elements.topbarEmail) {
+    elements.topbarEmail.textContent = email;
+  }
+  if (elements.topbarInitials) {
+    elements.topbarInitials.textContent = deriveInitials(displayName);
+  }
   if (elements.currencyChip) {
     elements.currencyChip.textContent = `Currency: ${state.currency.symbol}`;
   }
   if (elements.settingsCurrency) {
     elements.settingsCurrency.value = state.currency.code;
+  }
+  if (elements.headerCurrencySelect) {
+    elements.headerCurrencySelect.value = state.currency.code;
   }
   if (elements.settingsTheme && state.church?.preferences?.theme) {
     elements.settingsTheme.value = state.church.preferences.theme;
@@ -194,6 +261,7 @@ const refreshProfileUI = () => {
     elements.managerEmail.value = state.church.roles.managerEmail || '';
     elements.subManagerEmail.value = state.church.roles.subManagerEmail || '';
   }
+  applyAccent(state.ui.accent);
 };
 
 const deriveInitials = (name) => {
@@ -209,11 +277,13 @@ const deriveInitials = (name) => {
 const renderMembers = () => {
   if (!elements.membersTableBody) return;
   const search = document.getElementById('memberSearch')?.value.toLowerCase() ?? '';
-  const filter = elements.memberFilter?.value.toLowerCase() ?? '';
+  const ministryFilter = elements.memberFilter?.value.toLowerCase() ?? '';
+  const statusFilter = elements.memberStatusFilter?.value.toLowerCase() ?? '';
   const filtered = state.members.filter((member) => {
-    const matchesSearch = !search || member.fullName?.toLowerCase().includes(search) || member.ministry?.toLowerCase().includes(search);
-    const matchesFilter = !filter || member.ministry?.toLowerCase() === filter;
-    return matchesSearch && matchesFilter;
+    const matchesSearch = !search || member.fullName?.toLowerCase().includes(search) || member.ministry?.toLowerCase().includes(search) || member.phone?.toLowerCase().includes(search);
+    const matchesMinistry = !ministryFilter || member.ministry?.toLowerCase() === ministryFilter;
+    const matchesStatus = !statusFilter || member.lockStatus === statusFilter;
+    return matchesSearch && matchesMinistry && matchesStatus;
   });
 
   elements.membersTableBody.innerHTML = filtered
@@ -250,6 +320,8 @@ const renderMembers = () => {
       `;
     })
     .join('');
+
+  renderMemberActivity();
 };
 
 const renderAttendance = () => {
@@ -275,19 +347,40 @@ const renderAttendance = () => {
       `;
     })
     .join('');
+
+  updateAttendanceDetailChart();
+  updateReportsCharts();
+};
+
+const getVisibleFinanceRecords = () => {
+  const category = state.ui.financeCategory?.toLowerCase() ?? '';
+  const search = state.ui.financeSearch?.toLowerCase() ?? '';
+  const status = state.ui.financeStatus ?? '';
+
+  return state.finance.filter((item) => {
+    const matchesCategory = !category || (item.category || '').toLowerCase() === category;
+    const matchesStatus = !status || item.lockStatus === status;
+    const haystack = `${item.contributor || ''} ${(item.notes || '')} ${(item.category || '')}`.toLowerCase();
+    const matchesSearch = !search || haystack.includes(search);
+    return matchesCategory && matchesStatus && matchesSearch;
+  });
 };
 
 const renderFinance = () => {
   if (!elements.financeTableBody) return;
-  elements.financeTableBody.innerHTML = state.finance
+  const filtered = getVisibleFinanceRecords();
+
+  elements.financeTableBody.innerHTML = filtered
     .map((item) => {
       const statusClass = mapLockStatusClass(item.lockStatus);
       return `
         <tr data-id="${item.id}">
-          <td>${formatDate(item.date)}</td>
+          <td><input class="form-check-input finance-row-select" type="checkbox" data-id="${item.id}" /></td>
+          <td>${item.contributor || item.notes || '-'}</td>
           <td>${item.category || '-'}</td>
-          <td>${item.notes || '-'}</td>
           <td>${formatCurrency(item.amountGHS || 0)}</td>
+          <td>${formatDate(item.date)}</td>
+          <td>${formatTime(item.recordedTime)}</td>
           <td><span class="status-chip ${statusClass}">${formatLockStatus(item.lockStatus)}</span></td>
           <td class="text-end">
             <div class="btn-group">
@@ -299,6 +392,12 @@ const renderFinance = () => {
       `;
     })
     .join('');
+
+  if (elements.financeSelectAll) {
+    elements.financeSelectAll.checked = false;
+  }
+
+  updateReportsCharts();
 };
 
 const renderGroups = () => {
@@ -320,6 +419,65 @@ const renderGroups = () => {
             </div>
           </td>
         </tr>
+      `;
+    })
+    .join('');
+
+  renderUpcomingEvents();
+};
+
+const renderMemberActivity = () => {
+  if (!elements.memberActivityFeed) return;
+  if (!state.members.length) {
+    elements.memberActivityFeed.innerHTML = '<li class="placeholder-text">Invite your team to start capturing member updates.</li>';
+    return;
+  }
+  const recent = [...state.members]
+    .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))
+    .slice(0, 4);
+  elements.memberActivityFeed.innerHTML = recent
+    .map((member) => {
+      const created = member.createdAt?.toDate?.() || null;
+      return `
+        <li class="d-flex align-items-start gap-3 mb-3">
+          <div class="avatar-initials" style="width:36px;height:36px">${deriveInitials(member.fullName || 'GT')}</div>
+          <div>
+            <strong>${member.fullName || 'Member'}</strong>
+            <div class="text-muted small">${member.ministry || 'General'} · ${timeAgo(created)}</div>
+          </div>
+        </li>
+      `;
+    })
+    .join('');
+};
+
+const renderUpcomingEvents = () => {
+  if (!elements.upcomingEventsFeed) return;
+  if (!state.groups.length) {
+    elements.upcomingEventsFeed.innerHTML = '<li class="placeholder-text">Add events to see them appear here.</li>';
+    return;
+  }
+  const upcoming = [...state.groups]
+    .filter((group) => group.nextEventDate)
+    .sort((a, b) => (a.nextEventDate?.toMillis?.() || new Date(a.nextEventDate || 0)) - (b.nextEventDate?.toMillis?.() || new Date(b.nextEventDate || 0)))
+    .slice(0, 4);
+
+  if (!upcoming.length) {
+    elements.upcomingEventsFeed.innerHTML = '<li class="placeholder-text">No upcoming events recorded yet.</li>';
+    return;
+  }
+
+  elements.upcomingEventsFeed.innerHTML = upcoming
+    .map((event) => {
+      const date = event.nextEventDate?.toDate?.() || (event.nextEventDate ? new Date(event.nextEventDate) : null);
+      return `
+        <li class="d-flex align-items-start gap-3 mb-3">
+          <div class="icon icon-primary" style="width:36px;height:36px"><i class="fa-solid fa-calendar-check"></i></div>
+          <div>
+            <strong>${event.name || 'Upcoming event'}</strong>
+            <div class="text-muted small">${date ? date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Date TBA'} · ${event.status || 'Planned'}</div>
+          </div>
+        </li>
       `;
     })
     .join('');
@@ -487,6 +645,153 @@ const updateFinanceChart = () => {
   });
 };
 
+const updateAttendanceDetailChart = () => {
+  if (!elements.attendanceDetailChart) return;
+  const records = [...state.attendance].slice(0, 8).reverse();
+  const labels = records.map((r) => formatDate(r.eventDate));
+  const present = records.map((r) => r.present || 0);
+  const expected = records.map((r) => r.expected || 0);
+
+  if (state.charts.attendanceDetail) {
+    state.charts.attendanceDetail.data.labels = labels;
+    state.charts.attendanceDetail.data.datasets[0].data = present;
+    state.charts.attendanceDetail.data.datasets[1].data = expected;
+    state.charts.attendanceDetail.update();
+    return;
+  }
+
+  state.charts.attendanceDetail = new Chart(elements.attendanceDetailChart, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Present',
+          data: present,
+          borderColor: '#3e63f6',
+          backgroundColor: 'rgba(62, 99, 246, 0.12)',
+          tension: 0.4,
+          fill: true,
+          pointRadius: 4
+        },
+        {
+          label: 'Expected',
+          data: expected,
+          borderColor: '#f6c66a',
+          backgroundColor: 'rgba(246, 198, 106, 0.16)',
+          tension: 0.4,
+          fill: true,
+          pointRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+};
+
+const getReportsFilteredAttendance = () => {
+  const { start, end, event } = state.ui.reports;
+  return state.attendance.filter((record) => {
+    const date = record.eventDate?.toDate?.() || (record.eventDate ? new Date(record.eventDate) : null);
+    if (start && date && date < start) return false;
+    if (end && date && date > end) return false;
+    if (event && record.eventName && record.eventName.toLowerCase() !== event.toLowerCase()) return false;
+    return true;
+  });
+};
+
+const getReportsFilteredFinance = () => {
+  const { start, end } = state.ui.reports;
+  return state.finance.filter((item) => {
+    const date = item.date?.toDate?.() || (item.date ? new Date(item.date) : null);
+    if (start && date && date < start) return false;
+    if (end && date && date > end) return false;
+    return true;
+  });
+};
+
+const updateReportsCharts = () => {
+  const attendanceData = getReportsFilteredAttendance();
+  const financeData = getReportsFilteredFinance();
+
+  if (elements.reportsAttendanceChart) {
+    const labels = attendanceData.slice().reverse().map((r) => formatDate(r.eventDate));
+    const present = attendanceData.slice().reverse().map((r) => r.present || 0);
+    const expected = attendanceData.slice().reverse().map((r) => r.expected || 0);
+
+    if (state.charts.reportsAttendance) {
+      state.charts.reportsAttendance.data.labels = labels;
+      state.charts.reportsAttendance.data.datasets[0].data = present;
+      state.charts.reportsAttendance.data.datasets[1].data = expected;
+      state.charts.reportsAttendance.update();
+    } else {
+      state.charts.reportsAttendance = new Chart(elements.reportsAttendanceChart, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Present',
+              data: present,
+              backgroundColor: 'rgba(62, 99, 246, 0.7)'
+            },
+            {
+              label: 'Expected',
+              data: expected,
+              backgroundColor: 'rgba(246, 198, 106, 0.7)'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true } },
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+  }
+
+  if (elements.reportsFinanceChart) {
+    const categories = ['First Offering', 'Second Offering', 'Tithe', 'Seed Offering', 'Yellow Card', 'Other'];
+    const values = categories.map((category) =>
+      financeData.reduce((sum, item) => (item.category === category ? sum + (item.amountGHS || 0) : sum), 0)
+    );
+
+    if (state.charts.reportsFinance) {
+      state.charts.reportsFinance.data.datasets[0].data = values;
+      state.charts.reportsFinance.update();
+    } else {
+      state.charts.reportsFinance = new Chart(elements.reportsFinanceChart, {
+        type: 'doughnut',
+        data: {
+          labels: categories,
+          datasets: [
+            {
+              data: values,
+              backgroundColor: ['#3e63f6', '#8365f5', '#f6c66a', '#32c5a3', '#1b39c6', '#7c86a0'],
+              borderWidth: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+  }
+
+  renderReportsSummaries(attendanceData, financeData);
+};
+
 const renderAttendanceSummary = () => {
   if (!elements.attendanceSummary) return;
   const totalEvents = state.attendance.length;
@@ -502,16 +807,54 @@ const renderAttendanceSummary = () => {
 };
 
 const renderFinanceSummary = () => {
-  if (!elements.financeSummary) return;
+  if (!elements.financeSummaryReports) return;
   const monthTotal = sumFinanceForCurrentMonth();
   const topCategory = determineTopFinanceCategory();
-  elements.financeSummary.innerHTML = `
+  elements.financeSummaryReports.innerHTML = `
     <div class="d-flex flex-column gap-2">
       <div><strong>This month:</strong> ${formatCurrency(monthTotal)}</div>
       <div><strong>Largest category:</strong> ${topCategory.category} (${formatCurrency(topCategory.amount)})</div>
-      <div><strong>Average per service:</strong> ${formatCurrency(average(state.finance.map((f) => f.amountGHS || 0)))}</div>
+      <div><strong>Average per entry:</strong> ${formatCurrency(average(state.finance.map((f) => f.amountGHS || 0)))}</div>
     </div>
   `;
+};
+
+const renderReportsSummaries = (attendanceData, financeData) => {
+  if (elements.attendanceSummaryReports) {
+    const totalEvents = attendanceData.length;
+    const avgPresent = average(attendanceData.map((r) => r.present || 0));
+    const avgRate = attendanceData.length ? Math.round(average(attendanceData.map((record) => computeAttendanceRate(record)))) : 0;
+    elements.attendanceSummaryReports.innerHTML = `
+      <div class="d-flex flex-column gap-2">
+        <div><strong>Filtered events:</strong> ${totalEvents}</div>
+        <div><strong>Average attendance:</strong> ${avgPresent.toFixed(1)}</div>
+        <div><strong>Average rate:</strong> ${avgRate}%</div>
+      </div>
+    `;
+  }
+
+  if (elements.financeSummaryReports) {
+    const total = financeData.reduce((sum, item) => sum + (item.amountGHS || 0), 0);
+    const avg = financeData.length ? total / financeData.length : 0;
+    const topCategory = financeData.length
+      ? financeData.reduce((acc, item) => {
+          const key = item.category || 'Other';
+          acc[key] = (acc[key] || 0) + (item.amountGHS || 0);
+          return acc;
+        }, {})
+      : {};
+    const topEntry = Object.entries(topCategory)
+      .map(([category, amount]) => ({ category, amount }))
+      .sort((a, b) => b.amount - a.amount)[0] || { category: 'N/A', amount: 0 };
+
+    elements.financeSummaryReports.innerHTML = `
+      <div class="d-flex flex-column gap-2">
+        <div><strong>Filtered total:</strong> ${formatCurrency(total)}</div>
+        <div><strong>Average per entry:</strong> ${formatCurrency(avg)}</div>
+        <div><strong>Top category:</strong> ${topEntry.category} (${formatCurrency(topEntry.amount)})</div>
+      </div>
+    `;
+  }
 };
 
 const refreshAutomationFeed = () => {
@@ -576,6 +919,18 @@ const formatDate = (value) => {
   const date = value instanceof Date ? value : value?.toDate?.() || new Date(value);
   if (!date || Number.isNaN(date)) return '-';
   return date.toLocaleDateString();
+};
+
+const formatTime = (value) => {
+  if (!value) return '-';
+  if (value instanceof Date) {
+    return value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  if (value?.toDate) {
+    const date = value.toDate();
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  return value;
 };
 
 const timeAgo = (date) => {
@@ -839,13 +1194,111 @@ const registerEventHandlers = () => {
     await savePreferences({ theme: nextTheme });
   });
 
+  elements.sidebarThemeToggle?.addEventListener('click', async () => {
+    const nextTheme = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
+    setDashboardTheme(nextTheme);
+    await savePreferences({ theme: nextTheme });
+  });
+
   document.getElementById('notificationsBtn')?.addEventListener('click', () => {
     const offcanvas = bootstrap.Offcanvas.getOrCreateInstance('#notificationsPanel');
     offcanvas.show();
   });
 
+  elements.headerCurrencySelect?.addEventListener('change', async (event) => {
+    const value = event.target.value;
+    state.currency.code = value;
+    state.currency.symbol = resolveCurrencySymbol(value);
+    if (elements.settingsCurrency) elements.settingsCurrency.value = value;
+    if (elements.currencyChip) elements.currencyChip.textContent = `Currency: ${state.currency.symbol}`;
+    updateStats();
+    renderFinance();
+    await savePreferences({ currency: value });
+  });
+
   elements.memberFilter?.addEventListener('change', renderMembers);
+  elements.memberStatusFilter?.addEventListener('change', renderMembers);
   document.getElementById('memberSearch')?.addEventListener('input', renderMembers);
+
+  elements.financeTabs?.addEventListener('click', (event) => {
+    const button = event.target.closest('.finance-tab');
+    if (!button) return;
+    event.preventDefault();
+    elements.financeTabs.querySelectorAll('.finance-tab').forEach((tab) => tab.classList.remove('active'));
+    button.classList.add('active');
+    state.ui.financeCategory = button.getAttribute('data-category')?.toLowerCase() ?? '';
+    renderFinance();
+  });
+
+  elements.financeSearch?.addEventListener('input', (event) => {
+    state.ui.financeSearch = event.target.value;
+    renderFinance();
+  });
+
+  elements.financeStatusFilter?.addEventListener('change', (event) => {
+    state.ui.financeStatus = event.target.value;
+    renderFinance();
+  });
+
+  elements.financeSelectAll?.addEventListener('change', (event) => {
+    const checked = event.target.checked;
+    document.querySelectorAll('.finance-row-select').forEach((checkbox) => {
+      checkbox.checked = checked;
+    });
+  });
+
+  elements.financeDeleteRows?.addEventListener('click', handleFinanceBulkDelete);
+  elements.financeAutoTotal?.addEventListener('click', handleFinanceAutoTotal);
+
+  elements.colorPalette?.addEventListener('click', async (event) => {
+    const swatch = event.target.closest('.palette-swatch');
+    if (!swatch) return;
+    const accent = swatch.getAttribute('data-accent');
+    applyAccent(accent);
+    await savePreferences({ accent });
+    showToast('Accent updated.');
+  });
+
+  elements.resetPreferences?.addEventListener('click', async () => {
+    state.currency.code = 'GHS';
+    state.currency.symbol = resolveCurrencySymbol('GHS');
+    state.ui.financeCategory = '';
+    state.ui.financeSearch = '';
+    state.ui.financeStatus = '';
+    if (elements.headerCurrencySelect) elements.headerCurrencySelect.value = 'GHS';
+    if (elements.settingsCurrency) elements.settingsCurrency.value = 'GHS';
+    if (elements.settingsTheme) elements.settingsTheme.value = 'light';
+    if (elements.financeSearch) elements.financeSearch.value = '';
+    if (elements.financeStatusFilter) elements.financeStatusFilter.value = '';
+    if (elements.financeSelectAll) elements.financeSelectAll.checked = false;
+    if (elements.financeTabs) {
+      elements.financeTabs.querySelectorAll('.finance-tab').forEach((tab, index) => {
+        tab.classList.toggle('active', index === 0);
+      });
+    }
+    setDashboardTheme('light');
+    applyAccent('blue');
+    await savePreferences({ currency: 'GHS', theme: 'light', accent: 'blue' });
+    updateStats();
+    renderFinance();
+    showToast('Preferences reset to default.');
+  });
+
+  elements.reportsStartDate?.addEventListener('change', (event) => {
+    state.ui.reports.start = event.target.value ? new Date(event.target.value) : null;
+    updateReportsCharts();
+  });
+
+  elements.reportsEndDate?.addEventListener('change', (event) => {
+    const value = event.target.value;
+    state.ui.reports.end = value ? new Date(`${value}T23:59:59`) : null;
+    updateReportsCharts();
+  });
+
+  elements.reportsEventFilter?.addEventListener('change', (event) => {
+    state.ui.reports.event = event.target.value;
+    updateReportsCharts();
+  });
 
   document.getElementById('saveMemberBtn')?.addEventListener('click', saveMemberFromModal);
   document.getElementById('saveAttendanceBtn')?.addEventListener('click', saveAttendanceFromModal);
@@ -872,6 +1325,9 @@ const registerEventHandlers = () => {
     renderFinance();
     if (elements.currencyChip) {
       elements.currencyChip.textContent = `Currency: ${state.currency.symbol}`;
+    }
+    if (elements.headerCurrencySelect) {
+      elements.headerCurrencySelect.value = currency;
     }
     showToast('Preferences updated.');
   });
@@ -902,6 +1358,35 @@ const registerEventHandlers = () => {
 
   document.getElementById('approveApprovalBtn')?.addEventListener('click', () => handleApprovalDecision(true));
   document.getElementById('rejectApprovalBtn')?.addEventListener('click', () => handleApprovalDecision(false));
+};
+
+const getSelectedFinanceIds = () => Array.from(document.querySelectorAll('.finance-row-select:checked')).map((input) => input.getAttribute('data-id'));
+
+const handleFinanceBulkDelete = async () => {
+  const ids = getSelectedFinanceIds();
+  if (!ids.length) {
+    showToast('Select at least one finance row.', 'warning');
+    return;
+  }
+  if (!confirm(`Submit deletion requests for ${ids.length} finance record(s)?`)) return;
+  for (const id of ids) {
+    const record = state.finance.find((item) => item.id === id);
+    if (record) {
+      await createEditRequest({ entity: 'finance', action: 'delete', recordId: record.id, payload: null });
+    }
+  }
+  showToast('Deletion requests submitted.', 'info');
+};
+
+const handleFinanceAutoTotal = () => {
+  const ids = getSelectedFinanceIds();
+  const source = ids.length ? state.finance.filter((item) => ids.includes(item.id)) : getVisibleFinanceRecords();
+  if (!source.length) {
+    showToast('No finance records selected.', 'info');
+    return;
+  }
+  const total = source.reduce((sum, item) => sum + (item.amountGHS || 0), 0);
+  showToast(`Calculated total: ${formatCurrency(total)}`, 'info');
 };
 
 const handleTableAction = (entity) => (event) => {
@@ -962,10 +1447,12 @@ const populateModalForEntity = (entity, record) => {
       break;
     case 'finance':
       document.getElementById('financeModalLabel').textContent = 'Request finance edit';
+      document.getElementById('financeContributor').value = record.contributor || '';
       document.getElementById('financeDate').value = toInputDate(record.date);
       document.getElementById('financeCategory').value = record.category || '';
       document.getElementById('financeAmount').value = record.amountGHS || '';
       document.getElementById('financeNotes').value = record.notes || '';
+      document.getElementById('financeTime').value = record.recordedTime || '';
       break;
     case 'groups':
       document.getElementById('groupModalLabel').textContent = 'Request group edit';
@@ -1012,7 +1499,11 @@ const saveMemberFromModal = async () => {
   const modal = bootstrap.Modal.getOrCreateInstance('#memberModal');
   modal.hide();
 
-  const payload = { ...basePayload };
+  const payload = {
+    ...basePayload,
+    contributor: basePayload.contributor || null,
+    recordedTime: basePayload.recordedTime || null
+  };
 
   if (id) {
     await createEditRequest({ entity: 'members', action: 'update', recordId: id, payload });
@@ -1064,7 +1555,9 @@ const saveFinanceFromModal = async () => {
     date: toTimestamp(document.getElementById('financeDate').value),
     category: document.getElementById('financeCategory').value,
     notes: document.getElementById('financeNotes').value.trim(),
-    amountGHS: Number.isFinite(amount) ? amount : 0
+    amountGHS: Number.isFinite(amount) ? amount : 0,
+    contributor: document.getElementById('financeContributor').value.trim(),
+    recordedTime: document.getElementById('financeTime').value
   };
 
   if (!basePayload.date || !basePayload.category) {
@@ -1075,7 +1568,11 @@ const saveFinanceFromModal = async () => {
   const modal = bootstrap.Modal.getOrCreateInstance('#financeModal');
   modal.hide();
 
-  const payload = { ...basePayload };
+  const payload = {
+    ...basePayload,
+    contributor: basePayload.contributor || null,
+    recordedTime: basePayload.recordedTime || null
+  };
 
   if (id) {
     await createEditRequest({ entity: 'finance', action: 'update', recordId: id, payload });
@@ -1143,7 +1640,8 @@ const savePreferences = async (updates = {}) => {
   const churchRef = doc(db, 'churches', state.user.uid);
   await updateDoc(churchRef, {
     'preferences.currency': updates.currency ?? state.church?.preferences?.currency ?? 'GHS',
-    'preferences.theme': updates.theme ?? state.church?.preferences?.theme ?? 'light'
+    'preferences.theme': updates.theme ?? state.church?.preferences?.theme ?? 'light',
+    'preferences.accent': updates.accent ?? state.church?.preferences?.accent ?? 'blue'
   });
 };
 
@@ -1203,6 +1701,8 @@ const importRecord = async (type, record) => {
         category: record['Category'] || record.category,
         amountGHS: Number(record['Amount'] || record.amount) || 0,
         notes: record['Notes'] || record.notes,
+        contributor: record['Name'] || record.contributor || null,
+        recordedTime: record['Time'] || record.time || null,
         createdAt: serverTimestamp()
       });
       break;
