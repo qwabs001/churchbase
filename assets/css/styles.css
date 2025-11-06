@@ -178,6 +178,67 @@ body.landing[data-theme='dark'] .btn-soft {
   color: #fff;
 }
 
+body.landing[data-theme='dark'] .navbar .brand,
+body.landing[data-theme='dark'] .nav-link,
+body.landing[data-theme='dark'] .hero-title,
+body.landing[data-theme='dark'] .hero-subtitle,
+body.landing[data-theme='dark'] .hero-meta span,
+body.landing[data-theme='dark'] .hero-meta strong {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+body.landing[data-theme='dark'] .nav-link:hover {
+  color: #fff;
+}
+
+body.landing[data-theme='dark'] .hero-eyebrow {
+  background: rgba(246, 198, 106, 0.16);
+  color: #f6c66a;
+}
+
+body.landing[data-theme='dark'] .hero-card {
+  background: rgba(10, 16, 34, 0.95);
+  box-shadow: 0 32px 60px -40px rgba(0, 0, 0, 0.7);
+}
+
+body.landing[data-theme='dark'] .hero-card::before,
+body.landing[data-theme='dark'] .hero-card::after {
+  opacity: 0.35;
+}
+
+body.landing[data-theme='dark'] .metric {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+body.landing[data-theme='dark'] .metric-label {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+body.landing[data-theme='dark'] .metric-card {
+  background: rgba(15, 22, 40, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+body.landing[data-theme='dark'] .metric-chip {
+  background: rgba(246, 198, 106, 0.18);
+  color: #f6c66a;
+}
+
+body.landing[data-theme='dark'] .hero-card-footer,
+body.landing[data-theme='dark'] .hero-card-footer span {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+body.landing[data-theme='dark'] .hero-card .btn-link {
+  color: #f6c66a;
+}
+
+body.landing[data-theme='dark'] .hero-card .btn-link:hover {
+  color: #ffd27e;
+}
+
 .landing-header {
   position: sticky;
   top: 0;
