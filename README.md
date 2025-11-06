@@ -1,0 +1,1 @@
+fully functional Church Database Management Web App using HTML, CSS, and JavaScript, with a real authentication system (Signup/Login), a modern landing page, and a personal dashboard for each user to manage their church data online.
