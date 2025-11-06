@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Church Database Management | GraceTrack</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2T92UksdQRVvoxMfooAo4lW4v8uON7RkHYp+3Tkd6Pr1vF0oA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="assets/css/styles.css" />
+  </head>
+  <body class="landing-page">
+    <header class="navbar navbar-expand-lg navbar-light py-3 fixed-top shadow-sm">
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="#">GraceTrack</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto align-items-lg-center">
+            <li class="nav-item">
+              <a class="nav-link" href="#features">Features</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#modules">Modules</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#cta">Pricing</a>
+            </li>
+            <li class="nav-item ms-lg-3">
+              <a class="btn btn-outline-light" href="auth.html">Login</a>
+            </li>
+            <li class="nav-item ms-lg-2">
+              <a class="btn btn-gold" href="auth.html#signup">Start for Free</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </header>
+
+    <main class="mt-5 pt-5">
+      <section class="hero-section text-white" id="hero">
+        <div class="container">
+          <div class="row align-items-center">
+            <div class="col-lg-6">
+              <span class="badge rounded-pill text-bg-light text-primary mb-3"
+                ><i class="fa-solid fa-dove me-2"></i>Church Operations Suite</span
+              >
+              <h1 class="display-4 fw-bold mb-3">
+                Manage Your Church Records Smarter and Simpler.
+              </h1>
+              <p class="lead mb-4">
+                GraceTrack centralizes membership, attendance, finance, and reporting into one secure dashboard. Empower your ministry with data-driven insights, automated summaries, and collaborative workflows built for modern churches.
+              </p>
+              <div class="d-flex flex-wrap gap-3">
+                <a href="auth.html#signup" class="btn btn-gold btn-lg px-4"
+                  >Create an Account</a
+                >
+                <a href="auth.html" class="btn btn-outline-light btn-lg px-4"
+                  >Login</a
+                >
+              </div>
+              <div class="d-flex gap-4 align-items-center mt-4">
+                <div>
+                  <h4 class="mb-0 fw-bold">4,600+</h4>
+                  <small class="text-white-50">Members tracked monthly</small>
+                </div>
+                <div>
+                  <h4 class="mb-0 fw-bold">98%</h4>
+                  <small class="text-white-50">Leaders report improved insights</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6 mt-5 mt-lg-0">
+              <div class="dashboard-preview shadow-lg">
+                <div class="preview-header d-flex justify-content-between align-items-center">
+                  <span class="text-uppercase fw-semibold">Dashboard Preview</span>
+                  <span class="badge bg-soft-gold text-gold">Live Demo</span>
+                </div>
+                <img
+                  src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1400&q=80"
+                  alt="Dashboard preview"
+                  class="img-fluid rounded"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="py-6 bg-light" id="features">
+        <div class="container">
+          <div class="text-center mb-5">
+            <span class="text-gold text-uppercase fw-semibold">Product Highlights</span>
+            <h2 class="fw-bold mt-2">Everything your ministry needs in one place</h2>
+            <p class="text-muted">
+              GraceTrack keeps every stakeholder informed with real-time dashboards, smart automations, and collaborative approvals.
+            </p>
+          </div>
+          <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+              <div class="card feature-card h-100">
+                <div class="card-body">
+                  <div class="icon-circle mb-3">
+                    <i class="fa-solid fa-users"></i>
+                  </div>
+                  <h5 class="card-title fw-semibold">Member Tracking</h5>
+                  <p class="card-text">
+                    Maintain complete profiles with ministries, roles, notes, and attendance history. Upload photos and filter instantly.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <div class="card feature-card h-100">
+                <div class="card-body">
+                  <div class="icon-circle mb-3">
+                    <i class="fa-solid fa-chart-column"></i>
+                  </div>
+                  <h5 class="card-title fw-semibold">Insightful Analytics</h5>
+                  <p class="card-text">
+                    Chart services, groups, and giving over time with automated monthly and weekly summaries fed directly to your dashboard.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <div class="card feature-card h-100">
+                <div class="card-body">
+                  <div class="icon-circle mb-3">
+                    <i class="fa-solid fa-lock"></i>
+                  </div>
+                  <h5 class="card-title fw-semibold">Two-Level Security</h5>
+                  <p class="card-text">
+                    Protect sensitive edits with manager/sub-manager approvals. Track pending, approved, and locked states at a glance.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <div class="card feature-card h-100">
+                <div class="card-body">
+                  <div class="icon-circle mb-3">
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                  </div>
+                  <h5 class="card-title fw-semibold">Exports & Templates</h5>
+                  <p class="card-text">
+                    Download CSV/PDF reports and import legacy sheets seamlessly with pre-formatted templates for every ministry area.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="py-6" id="modules">
+        <div class="container">
+          <div class="row align-items-center g-5">
+            <div class="col-lg-5">
+              <h2 class="fw-bold">A modern workspace for church leadership teams</h2>
+              <p class="text-muted">
+                From attendance to finance to ministries, every module in GraceTrack is designed to give your team clarity and confidence. Customize permissions, automate follow-ups, and keep every ministry moving forward.
+              </p>
+              <ul class="list-unstyled feature-list">
+                <li><i class="fa-solid fa-check me-2 text-gold"></i>Dashboard overview with key metrics</li>
+                <li><i class="fa-solid fa-check me-2 text-gold"></i>Attendance tracking & service analytics</li>
+                <li><i class="fa-solid fa-check me-2 text-gold"></i>Finance ledger for offerings and tithes</li>
+                <li><i class="fa-solid fa-check me-2 text-gold"></i>Groups, events, and ministry planning</li>
+                <li><i class="fa-solid fa-check me-2 text-gold"></i>Automated reports & easy exports</li>
+              </ul>
+              <a href="dashboard.html" class="btn btn-outline-primary btn-lg mt-3"
+                >See the Dashboard</a
+              >
+            </div>
+            <div class="col-lg-7">
+              <div class="row g-4">
+                <div class="col-md-6">
+                  <div class="module-card p-4 shadow-sm h-100">
+                    <h5 class="fw-semibold">Member Directory</h5>
+                    <p class="text-muted">
+                      Central record keeping with search, filters, and role-based notes.
+                    </p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="module-card p-4 shadow-sm h-100">
+                    <h5 class="fw-semibold">Smart Attendance</h5>
+                    <p class="text-muted">
+                      Record services, streamline roll calls, and watch trends update instantly.
+                    </p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="module-card p-4 shadow-sm h-100">
+                    <h5 class="fw-semibold">Giving & Finance</h5>
+                    <p class="text-muted">
+                      Tithes, offerings, and special funds with auto totals and currency switcher.
+                    </p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="module-card p-4 shadow-sm h-100">
+                    <h5 class="fw-semibold">Reports & Alerts</h5>
+                    <p class="text-muted">
+                      Export-ready summaries and edit approvals that keep leaders aligned.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="py-6 bg-primary text-white" id="cta">
+        <div class="container">
+          <div class="row align-items-center">
+            <div class="col-lg-8">
+              <h2 class="fw-bold mb-3">Bring clarity to every department in your church.</h2>
+              <p class="mb-0">
+                Launch in minutes with our secure, cloud-based platform. No credit card required—just the desire to serve with excellence.
+              </p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+              <a href="auth.html#signup" class="btn btn-gold btn-lg px-4">Start for Free</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="py-4 bg-dark text-white">
+      <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+        <div>
+          <span class="fw-semibold">GraceTrack</span> &copy; <span id="year"></span>. All rights reserved.
+        </div>
+        <div class="d-flex gap-3">
+          <a href="mailto:support@gracetrack.io" class="text-white text-decoration-none"
+            ><i class="fa-solid fa-envelope me-2"></i>support@gracetrack.io</a
+          >
+          <a href="#" class="text-white text-decoration-none"
+            ><i class="fa-brands fa-facebook"></i>
+          </a>
+          <a href="#" class="text-white text-decoration-none"
+            ><i class="fa-brands fa-instagram"></i>
+          </a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>
