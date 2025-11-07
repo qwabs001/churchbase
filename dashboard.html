@@ -27,46 +27,62 @@
   </head>
   <body class="dashboard">
     <div class="d-flex">
-      <aside class="sidebar p-4 d-flex flex-column gap-4">
-        <div class="d-flex flex-column gap-3">
-          <div class="brand">GraceTrack</div>
-          <div>
-            <span class="d-block small text-white-50">Logged in as</span>
-            <span class="fw-semibold" id="sidebarUserName">Loading...</span>
-          </div>
+      <aside class="sidebar">
+        <div class="brand">GraceTrack</div>
+        <div class="sidebar-user">
+          <span class="label">Logged in as</span>
+          <span class="name" id="sidebarUserName">Loading...</span>
         </div>
         <nav class="nav flex-column gap-1" id="dashboardNav">
           <a class="nav-link active" href="#" data-section="overview"><i class="fa-solid fa-chart-pie"></i>Overview</a>
           <a class="nav-link" href="#" data-section="members"><i class="fa-solid fa-users"></i>Members</a>
           <a class="nav-link" href="#" data-section="attendance"><i class="fa-solid fa-calendar-check"></i>Attendance</a>
           <a class="nav-link" href="#" data-section="finance"><i class="fa-solid fa-coins"></i>Finance</a>
-          <a class="nav-link" href="#" data-section="groups"><i class="fa-solid fa-people-group"></i>Groups & Events</a>
-          <a class="nav-link" href="#" data-section="reports"><i class="fa-solid fa-file-chart-column"></i>Reports</a>
+          <a class="nav-link" href="#" data-section="groups"><i class="fa-solid fa-people-group"></i>Events</a>
+          <a class="nav-link" href="#" data-section="reports"><i class="fa-solid fa-chart-column"></i>Reports</a>
           <a class="nav-link" href="#" data-section="settings"><i class="fa-solid fa-gear"></i>Settings</a>
         </nav>
-        <div class="mt-auto">
-          <button class="btn btn-outline-light w-100" id="logoutBtn">
-            <i class="fa-solid fa-arrow-right-from-bracket me-2"></i>Log out
+        <div class="mt-auto d-grid gap-2">
+          <button class="btn btn-soft" id="sidebarThemeToggle">
+            <i class="fa-solid fa-circle-half-stroke"></i>
+            Swap theme
+          </button>
+          <button class="btn" id="logoutBtn">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            Log out
           </button>
         </div>
       </aside>
 
-      <div class="flex-grow-1 min-vh-100 bg-light">
+      <div class="flex-grow-1 min-vh-100">
         <header class="d-flex flex-wrap flex-md-nowrap justify-content-between align-items-center gap-3 p-4">
           <div>
             <h1 class="h3 fw-bold mb-1">Church Operations Hub</h1>
-            <p class="text-muted mb-0">Stay in sync with your ministry data in real time.</p>
+            <p class="text-muted mb-0">Soft shadows, rounded cards, and live metrics tailored for your ministry.</p>
           </div>
           <div class="d-flex flex-wrap align-items-center gap-3">
             <div class="chip-light" id="currencyChip">Currency: ₵</div>
+            <select class="form-select form-select-sm shadow-none" style="width: 170px" id="headerCurrencySelect">
+              <option value="GHS">Ghana Cedi (₵)</option>
+              <option value="USD">US Dollar ($)</option>
+              <option value="GBP">British Pound (£)</option>
+              <option value="EUR">Euro (€)</option>
+            </select>
             <button class="mode-toggle" id="modeToggle">
               <i class="fa-solid fa-circle-half-stroke"></i>
               <span>Light</span>
             </button>
-            <button class="btn btn-outline-primary position-relative" id="notificationsBtn">
+            <button class="btn btn-soft position-relative" id="notificationsBtn">
               <i class="fa-solid fa-bell"></i>
               <span class="badge rounded-pill bg-danger position-absolute top-0 start-100 translate-middle" id="notificationCount">0</span>
             </button>
+            <div class="avatar-pill">
+              <div class="avatar-initials" id="topbarInitials">GT</div>
+              <div class="avatar-meta">
+                <span id="topbarName">GraceTrack User</span>
+                <small id="topbarEmail">user@example.com</small>
+              </div>
+            </div>
           </div>
         </header>
 
@@ -77,7 +93,7 @@
                 <div class="card quick-stat-card">
                   <span class="label">Members</span>
                   <span class="value" id="statMembers">0</span>
-                  <small class="text-muted">Active members</small>
+                  <small class="text-muted">Active profiles</small>
                 </div>
               </div>
               <div class="col-md-6 col-xl-3">
@@ -89,37 +105,56 @@
               </div>
               <div class="col-md-6 col-xl-3">
                 <div class="card quick-stat-card">
-                  <span class="label">This Month</span>
+                  <span class="label">Monthly Giving</span>
                   <span class="value" id="statFinance">₵0</span>
-                  <small class="text-muted">Total giving</small>
+                  <small class="text-muted">All categories</small>
                 </div>
               </div>
               <div class="col-md-6 col-xl-3">
                 <div class="card quick-stat-card">
-                  <span class="label">Pending Approvals</span>
+                  <span class="label">Approvals</span>
                   <span class="value" id="statApprovals">0</span>
-                  <small class="text-muted">Awaiting manager review</small>
+                  <small class="text-muted">Requests waiting</small>
                 </div>
               </div>
             </div>
 
             <div class="row g-4 mt-1">
-              <div class="col-lg-7">
+              <div class="col-xl-8">
                 <div class="card h-100 p-4">
                   <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-semibold mb-0">Attendance Trends</h5>
+                    <h5 class="fw-semibold mb-0">Attendance Trend</h5>
                     <div class="chip-light" id="attendanceTrendRange">Last 12 weeks</div>
                   </div>
                   <canvas id="attendanceChart" height="260"></canvas>
                 </div>
               </div>
-              <div class="col-lg-5">
+              <div class="col-xl-4">
                 <div class="card h-100 p-4">
                   <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-semibold mb-0">Giving Breakdown</h5>
+                    <h5 class="fw-semibold mb-0">Giving Distribution</h5>
                     <div class="chip-light" id="financeTrendRange">Current month</div>
                   </div>
                   <canvas id="financeChart" height="260"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <div class="row g-4 mt-1">
+              <div class="col-xl-6">
+                <div class="card p-4 h-100">
+                  <h5 class="fw-semibold mb-3">Recent Member Activity</h5>
+                  <ul class="list-unstyled mb-0" id="memberActivityFeed">
+                    <li class="placeholder-text">Activity updates appear as members engage.</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="col-xl-6">
+                <div class="card p-4 h-100">
+                  <h5 class="fw-semibold mb-3">Upcoming Events</h5>
+                  <ul class="list-unstyled mb-0" id="upcomingEventsFeed">
+                    <li class="placeholder-text">Sync your calendar to see upcoming programs.</li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -137,27 +172,35 @@
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
               <div>
                 <h2 class="h4 fw-bold mb-1">Member Directory</h2>
-                <p class="text-muted mb-0">Manage member profiles, ministries, and roles.</p>
+                <p class="text-muted mb-0">Card-style rows with photo, ministry, and quick actions.</p>
               </div>
               <div class="d-flex flex-wrap gap-2">
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#memberModal">
                   <i class="fa-solid fa-user-plus me-2"></i>Add member
                 </button>
-                <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#importModal">
+                <button class="btn btn-soft" data-bs-toggle="modal" data-bs-target="#importModal">
                   <i class="fa-solid fa-file-import me-2"></i>Import CSV
                 </button>
-                <button class="btn btn-outline-success" id="exportMembersBtn">
+                <button class="btn btn-soft" id="exportMembersBtn">
                   <i class="fa-solid fa-file-export me-2"></i>Export
                 </button>
               </div>
             </div>
             <div class="row g-3 mb-3">
               <div class="col-md-6 col-lg-4">
-                <input type="search" class="form-control" id="memberSearch" placeholder="Search members" />
+                <input type="search" class="form-control" id="memberSearch" placeholder="Search name, ministry or contact" />
               </div>
               <div class="col-md-6 col-lg-4">
                 <select class="form-select" id="memberFilter">
                   <option value="">Filter by ministry</option>
+                </select>
+              </div>
+              <div class="col-md-6 col-lg-4">
+                <select class="form-select" id="memberStatusFilter">
+                  <option value="">Status</option>
+                  <option value="locked">Locked</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
                 </select>
               </div>
             </div>
@@ -181,12 +224,34 @@
           <section data-section="attendance" class="dashboard-section d-none">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
               <div>
-                <h2 class="h4 fw-bold mb-1">Attendance Records</h2>
-                <p class="text-muted mb-0">Track weekly services and group gatherings.</p>
+                <h2 class="h4 fw-bold mb-1">Attendance Workspace</h2>
+                <p class="text-muted mb-0">Table-style roll call with quick totals and graphs.</p>
               </div>
-              <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#attendanceModal">
-                <i class="fa-solid fa-plus me-2"></i>Record attendance
-              </button>
+              <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#attendanceModal">
+                  <i class="fa-solid fa-plus me-2"></i>Record attendance
+                </button>
+                <button class="btn btn-soft" id="attendanceDownloadTemplate">
+                  <i class="fa-solid fa-file-csv me-2"></i>Download template
+                </button>
+              </div>
+            </div>
+            <div class="row g-4 mb-4">
+              <div class="col-xl-5">
+                <div class="card h-100 p-4">
+                  <h5 class="fw-semibold mb-3">Summary</h5>
+                  <div class="d-flex flex-column gap-2" id="attendanceSummary"></div>
+                </div>
+              </div>
+              <div class="col-xl-7">
+                <div class="card h-100 p-4">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-semibold mb-0">Trend by Event</h5>
+                    <span class="chip-light">Weekly rollup</span>
+                  </div>
+                  <canvas id="attendanceDetailChart" height="220"></canvas>
+                </div>
+              </div>
             </div>
             <div class="table-responsive table-modern">
               <table class="table align-middle mb-0" id="attendanceTable">
@@ -208,41 +273,58 @@
           <section data-section="finance" class="dashboard-section d-none">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
               <div>
-                <h2 class="h4 fw-bold mb-1">Finance Ledger</h2>
-                <p class="text-muted mb-0">Monitor offerings, tithes, and contributions.</p>
+                <h2 class="h4 fw-bold mb-1">Finance Management</h2>
+                <p class="text-muted mb-0">Tabbed offerings, spreadsheet-like table, and auto totals.</p>
               </div>
-              <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#financeModal">
-                <i class="fa-solid fa-money-check-dollar me-2"></i>Add record
-              </button>
-            </div>
-            <div class="row g-4 mb-4">
-              <div class="col-md-4">
-                <div class="card quick-stat-card">
-                  <span class="label">Total this week</span>
-                  <span class="value" id="financeWeekTotal">₵0</span>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="card quick-stat-card">
-                  <span class="label">Total this month</span>
-                  <span class="value" id="financeMonthTotal">₵0</span>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="card quick-stat-card">
-                  <span class="label">Yellow Card (Sun)</span>
-                  <span class="value" id="financeYellowCard">₵0</span>
-                </div>
+              <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#financeModal">
+                  <i class="fa-solid fa-plus me-2"></i>Add row
+                </button>
+                <button class="btn btn-soft" id="financeDeleteRows">
+                  <i class="fa-solid fa-trash-can me-2"></i>Delete selected
+                </button>
+                <button class="btn btn-soft" id="financeAutoTotal">
+                  <i class="fa-solid fa-calculator me-2"></i>Auto total
+                </button>
               </div>
             </div>
+
+            <div class="finance-summary mb-4">
+              <div class="summary-card">This week<span class="d-block h5 mb-0" id="financeWeekTotal">₵0</span></div>
+              <div class="summary-card">This month<span class="d-block h5 mb-0" id="financeMonthTotal">₵0</span></div>
+              <div class="summary-card">Yellow Card (Sun)<span class="d-block h5 mb-0" id="financeYellowCard">₵0</span></div>
+            </div>
+
+            <div class="finance-toolbar mb-3">
+              <div class="finance-tabs" id="financeTabs">
+                <button class="finance-tab active" data-category="">All</button>
+                <button class="finance-tab" data-category="First Offering">1st Offering</button>
+                <button class="finance-tab" data-category="Second Offering">2nd Offering</button>
+                <button class="finance-tab" data-category="Tithe">Tithe</button>
+                <button class="finance-tab" data-category="Seed Offering">Seed Offering</button>
+                <button class="finance-tab" data-category="Yellow Card">Yellow Card</button>
+              </div>
+              <div class="d-flex gap-2">
+                <input type="search" class="form-control" id="financeSearch" placeholder="Search contributor or notes" />
+                <select class="form-select" id="financeStatusFilter">
+                  <option value="">Status</option>
+                  <option value="locked">Locked</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                </select>
+              </div>
+            </div>
+
             <div class="table-responsive table-modern">
               <table class="table align-middle mb-0" id="financeTable">
                 <thead>
                   <tr>
-                    <th>Date</th>
+                    <th style="width: 48px"><input class="form-check-input" type="checkbox" id="financeSelectAll" /></th>
+                    <th>Name</th>
                     <th>Category</th>
-                    <th>Description</th>
                     <th>Amount</th>
+                    <th>Date</th>
+                    <th>Time</th>
                     <th>Status</th>
                     <th class="text-end">Actions</th>
                   </tr>
@@ -255,12 +337,17 @@
           <section data-section="groups" class="dashboard-section d-none">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
               <div>
-                <h2 class="h4 fw-bold mb-1">Groups & Events</h2>
-                <p class="text-muted mb-0">Coordinate ministries, teams, and upcoming events.</p>
+                <h2 class="h4 fw-bold mb-1">Events & Ministries</h2>
+                <p class="text-muted mb-0">Keep ministries, groups, and upcoming programs on track.</p>
               </div>
-              <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#groupModal">
-                <i class="fa-solid fa-people-group me-2"></i>Add group/event
-              </button>
+              <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#groupModal">
+                  <i class="fa-solid fa-people-group me-2"></i>Add event
+                </button>
+                <button class="btn btn-soft" id="groupsExport">
+                  <i class="fa-solid fa-download me-2"></i>Export list
+                </button>
+              </div>
             </div>
             <div class="table-responsive table-modern">
               <table class="table align-middle mb-0" id="groupsTable">
@@ -282,104 +369,125 @@
           <section data-section="reports" class="dashboard-section d-none">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
               <div>
-                <h2 class="h4 fw-bold mb-1">Reports & Exports</h2>
-                <p class="text-muted mb-0">Generate attendance and finance summaries.</p>
+                <h2 class="h4 fw-bold mb-1">Reports & Insights</h2>
+                <p class="text-muted mb-0">Filter by date and event type, then export beautiful charts.</p>
               </div>
               <div class="d-flex flex-wrap gap-2">
-                <button class="btn btn-outline-primary" id="generateAttendanceReport">
+                <button class="btn btn-soft" id="generateAttendanceReport">
                   <i class="fa-solid fa-file-lines me-2"></i>Attendance PDF
                 </button>
-                <button class="btn btn-outline-primary" id="generateFinanceReport">
+                <button class="btn btn-soft" id="generateFinanceReport">
                   <i class="fa-solid fa-file-lines me-2"></i>Finance PDF
                 </button>
-                <button class="btn btn-outline-success" id="exportFinanceCsv">
+                <button class="btn btn-soft" id="exportFinanceCsv">
                   <i class="fa-solid fa-file-csv me-2"></i>Finance CSV
                 </button>
               </div>
             </div>
+
+            <div id="reportsFilters" class="mb-4">
+              <input type="date" class="form-control" id="reportsStartDate" placeholder="Start date" />
+              <input type="date" class="form-control" id="reportsEndDate" placeholder="End date" />
+              <select class="form-select" id="reportsEventFilter">
+                <option value="">All event types</option>
+                <option value="Sunday Service">Sunday Service</option>
+                <option value="Youth Fellowship">Youth Fellowship</option>
+                <option value="Prayer Meeting">Prayer Meeting</option>
+              </select>
+            </div>
+
+            <div class="reports-grid mb-4">
+              <div class="report-card">
+                <h5 class="fw-semibold mb-3">Attendance Overview</h5>
+                <canvas id="reportsAttendanceChart" height="220"></canvas>
+              </div>
+              <div class="report-card">
+                <h5 class="fw-semibold mb-3">Finance Overview</h5>
+                <canvas id="reportsFinanceChart" height="220"></canvas>
+              </div>
+            </div>
+
             <div class="row g-4">
               <div class="col-lg-6">
                 <div class="card p-4 h-100">
                   <h5 class="fw-semibold">Attendance Summary</h5>
-                  <div class="mt-3" id="attendanceSummary"></div>
+                  <div class="mt-3" id="attendanceSummaryReports"></div>
                 </div>
               </div>
               <div class="col-lg-6">
                 <div class="card p-4 h-100">
                   <h5 class="fw-semibold">Finance Summary</h5>
-                  <div class="mt-3" id="financeSummary"></div>
+                  <div class="mt-3" id="financeSummaryReports"></div>
                 </div>
               </div>
             </div>
           </section>
 
           <section data-section="settings" class="dashboard-section d-none">
-            <div class="row g-4">
-              <div class="col-lg-6">
-                <div class="card p-4">
-                  <h5 class="fw-semibold">Preferences</h5>
-                  <form id="settingsForm" class="mt-3">
-                    <div class="mb-3">
-                      <label class="form-label">Currency</label>
-                      <select class="form-select" id="settingsCurrency">
-                        <option value="GHS">Ghana Cedi (₵)</option>
-                        <option value="USD">US Dollar ($)</option>
-                        <option value="GBP">British Pound (£)</option>
-                        <option value="EUR">Euro (€)</option>
-                      </select>
-                    </div>
-                    <div class="mb-3">
-                      <label class="form-label">Theme</label>
-                      <select class="form-select" id="settingsTheme">
-                        <option value="light">Light</option>
-                        <option value="dark">Dark</option>
-                      </select>
-                    </div>
-                    <button class="btn btn-primary" type="submit">Save preferences</button>
-                  </form>
-                </div>
-              </div>
-              <div class="col-lg-6">
-                <div class="card p-4">
-                  <h5 class="fw-semibold">Approval Roles</h5>
-                  <form id="rolesForm" class="mt-3">
-                    <div class="mb-3">
-                      <label class="form-label">Manager Email</label>
-                      <input type="email" class="form-control" id="managerEmail" required />
-                    </div>
-                    <div class="mb-3">
-                      <label class="form-label">Sub-Manager Email</label>
-                      <input type="email" class="form-control" id="subManagerEmail" required />
-                    </div>
-                    <div class="alert alert-info" id="rolesInfo">
-                      Approval requests will notify both manager and sub-manager. The first to approve completes the edit.
-                    </div>
-                    <button class="btn btn-primary" type="submit">Update roles</button>
-                  </form>
-                </div>
-              </div>
-              <div class="col-12">
-                <div class="card p-4">
-                  <h5 class="fw-semibold">Account</h5>
-                  <div class="row g-3 align-items-center">
-                    <div class="col-md-6">
-                      <div class="d-flex align-items-center gap-3">
-                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px">
-                          <span class="h5 mb-0" id="accountInitials">GT</span>
-                        </div>
-                        <div>
-                          <h6 class="mb-0" id="accountName">Loading...</h6>
-                          <small class="text-muted" id="accountEmail">...</small>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="col-md-6 text-md-end">
-                      <button class="btn btn-outline-danger" id="deleteAccountBtn">
-                        <i class="fa-solid fa-user-slash me-2"></i>Delete account
-                      </button>
+            <div class="settings-grid">
+              <div class="card p-4">
+                <h5 class="fw-semibold">Workspace Preferences</h5>
+                <form id="settingsForm" class="mt-3">
+                  <div class="mb-3">
+                    <label class="form-label">Currency</label>
+                    <select class="form-select" id="settingsCurrency">
+                      <option value="GHS">Ghana Cedi (₵)</option>
+                      <option value="USD">US Dollar ($)</option>
+                      <option value="GBP">British Pound (£)</option>
+                      <option value="EUR">Euro (€)</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Theme</label>
+                    <select class="form-select" id="settingsTheme">
+                      <option value="light">Light</option>
+                      <option value="dark">Dark</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Dashboard Accent</label>
+                    <div class="palette-options" id="colorPalette">
+                      <button type="button" class="palette-swatch active" data-accent="blue" style="background: linear-gradient(135deg, #3e63f6, #6a8bff)"></button>
+                      <button type="button" class="palette-swatch" data-accent="gold" style="background: linear-gradient(135deg, #f6c66a, #f89b37)"></button>
+                      <button type="button" class="palette-swatch" data-accent="mint" style="background: linear-gradient(135deg, #32c5a3, #62ecca)"></button>
+                      <button type="button" class="palette-swatch" data-accent="purple" style="background: linear-gradient(135deg, #8365f5, #b396ff)"></button>
                     </div>
                   </div>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-primary" type="submit">Save preferences</button>
+                    <button class="btn btn-soft" type="button" id="resetPreferences">Reset to default</button>
+                  </div>
+                </form>
+              </div>
+              <div class="card p-4">
+                <h5 class="fw-semibold">Approval Roles</h5>
+                <form id="rolesForm" class="mt-3">
+                  <div class="mb-3">
+                    <label class="form-label">Manager Email</label>
+                    <input type="email" class="form-control" id="managerEmail" required />
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Sub-Manager Email</label>
+                    <input type="email" class="form-control" id="subManagerEmail" required />
+                  </div>
+                  <div class="alert alert-info" id="rolesInfo">
+                    Approval requests notify both roles. The first to approve completes the edit.
+                  </div>
+                  <button class="btn btn-primary" type="submit">Update roles</button>
+                </form>
+              </div>
+              <div class="card p-4">
+                <h5 class="fw-semibold">Account</h5>
+                <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                  <div class="avatar-initials" style="width: 56px; height: 56px" id="accountInitials">GT</div>
+                  <div>
+                    <h6 class="mb-0" id="accountName">GraceTrack User</h6>
+                    <small class="text-muted" id="accountEmail">user@example.com</small>
+                  </div>
                 </div>
+                <button class="btn btn-soft w-100" id="deleteAccountBtn">
+                  <i class="fa-solid fa-user-slash me-2"></i>Delete account
+                </button>
               </div>
             </div>
           </section>
@@ -498,52 +606,60 @@
       </div>
     </div>
 
-    <!-- Finance Modal -->
-    <div class="modal fade" id="financeModal" tabindex="-1" aria-labelledby="financeModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="financeModalLabel">New finance entry</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <form id="financeForm">
-              <input type="hidden" id="financeId" />
-              <div class="row g-3">
-                <div class="col-md-4">
-                  <label class="form-label" for="financeDate">Date</label>
-                  <input type="date" class="form-control" id="financeDate" required />
+      <!-- Finance Modal -->
+      <div class="modal fade" id="financeModal" tabindex="-1" aria-labelledby="financeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="financeModalLabel">New finance entry</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form id="financeForm">
+                <input type="hidden" id="financeId" />
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label" for="financeContributor">Contributor name</label>
+                    <input type="text" class="form-control" id="financeContributor" placeholder="Member or guest" />
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label" for="financeDate">Date</label>
+                    <input type="date" class="form-control" id="financeDate" required />
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label" for="financeTime">Time</label>
+                    <input type="time" class="form-control" id="financeTime" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label" for="financeCategory">Category</label>
+                    <select class="form-select" id="financeCategory" required>
+                      <option value="" disabled selected>Select</option>
+                      <option value="First Offering">1st Offering</option>
+                      <option value="Second Offering">2nd Offering</option>
+                      <option value="Tithe">Tithe</option>
+                      <option value="Seed Offering">Seed Offering</option>
+                      <option value="Yellow Card">Yellow Card</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label" for="financeAmount">Amount</label>
+                    <input type="number" class="form-control" id="financeAmount" min="0" step="0.01" required />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label" for="financeNotes">Notes</label>
+                    <input type="text" class="form-control" id="financeNotes" placeholder="Service, envelope ID, etc." />
+                  </div>
                 </div>
-                <div class="col-md-4">
-                  <label class="form-label" for="financeCategory">Category</label>
-                  <select class="form-select" id="financeCategory" required>
-                    <option value="" disabled selected>Select</option>
-                    <option value="First Offering">1st Offering</option>
-                    <option value="Second Offering">2nd Offering</option>
-                    <option value="Tithe">Tithe</option>
-                    <option value="Seed Offering">Seed Offering</option>
-                    <option value="Yellow Card">Yellow Card</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label" for="financeAmount">Amount</label>
-                  <input type="number" class="form-control" id="financeAmount" min="0" step="0.01" required />
-                </div>
-                <div class="col-md-12">
-                  <label class="form-label" for="financeNotes">Details</label>
-                  <input type="text" class="form-control" id="financeNotes" placeholder="Service, speaker, etc." />
-                </div>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-primary" id="saveFinanceBtn">Save entry</button>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="saveFinanceBtn">Save entry</button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
     <!-- Group Modal -->
     <div class="modal fade" id="groupModal" tabindex="-1" aria-labelledby="groupModalLabel" aria-hidden="true">
